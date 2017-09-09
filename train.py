@@ -2,7 +2,7 @@ import glob
 import matplotlib.image as mpimg
 import numpy as np
 import time
-
+import pickle
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
@@ -11,24 +11,26 @@ from sklearn.svm import LinearSVC
 
 
 def train():
-    X_scaler = StandardScaler()
     orient = 9
     pix_per_cell = 8
     cell_per_block = 2
     spatial_size = (32, 32)
     hist_bins = 32
+    hog_channel = 'ALL'
     svc = LinearSVC()
     car_features = []
     notcar_features = []
 
     t1 = time.time()
-    for fname in glob.glob('train_images/vehicles/*/*.png'):
+    for fname in glob.glob('train_images/vehicles/**/*.png'):
         image = mpimg.imread(fname)
-        feature = single_img_features(image)
+        feature = single_img_features(image, orient=orient, cell_per_block=cell_per_block, pix_per_cell=pix_per_cell,
+                                      spatial_size=spatial_size, hist_bins=hist_bins, hog_channel=hog_channel)
         car_features.append(feature)
-    for fname in glob.glob('train_images/non-vehicles/*/*.png'):
+    for fname in glob.glob('train_images/non-vehicles/**/*.png'):
         image = mpimg.imread(fname)
-        feature = single_img_features(image)
+        feature = single_img_features(image, orient=orient, cell_per_block=cell_per_block, pix_per_cell=pix_per_cell,
+                                      spatial_size=spatial_size, hist_bins=hist_bins, hog_channel=hog_channel)
         notcar_features.append(feature)
     t2 = time.time()
     print(round(t2 - t1, 2), 'Seconds to extract HOG features...')
@@ -49,5 +51,11 @@ def train():
     print(round(t2 - t1, 2), 'Seconds to train SVC...')
 
     print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
+
+    print("Saving pickle")
+    src_pickle = {"svc": svc, "scaler": X_scaler, "orient": orient, "pix_per_cell": pix_per_cell,
+                  "cell_per_block": cell_per_block, "spatial_size": spatial_size, "hist_bins": hist_bins,"hog_channel":hog_channel}
+    pickle.dump(src_pickle, open("svc_pickle.p", "wb"))
+
 
 train()

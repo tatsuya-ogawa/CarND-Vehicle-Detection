@@ -1,24 +1,18 @@
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
-import numpy as np
 import pickle
-import cv2
-from sklearn.preprocessing import StandardScaler
-from sklearn.svm import LinearSVC
 import glob
+
 from functions import *
 
-
-
-img = mpimg.imread('test_image.jpg')
-
-# {'svc': LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-#                   intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-#                   multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
-#                   verbose=0), 'pix_per_cell': 8, 'spatial_size': (32, 32),
-#  'scaler': StandardScaler(copy=True, with_mean=True, with_std=True), 'hist_bins': 32, 'cell_per_block': 2, 'orient': 9}
-
-
+dist_pickle = pickle.load(open("svc_pickle.p", "rb"))
+svc = dist_pickle["svc"]
+X_scaler = dist_pickle["scaler"]
+orient = dist_pickle["orient"]
+pix_per_cell = dist_pickle["pix_per_cell"]
+cell_per_block = dist_pickle["cell_per_block"]
+spatial_size = dist_pickle["spatial_size"]
+hist_bins = dist_pickle["hist_bins"]
 
 
 # Define a single function that can extract features using hog sub-sampling and make predictions
@@ -74,8 +68,8 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
             hist_features = color_hist(subimg, nbins=hist_bins)
 
             # Scale features and make a prediction
-            test_features = X_scaler.transform(
-                np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))
+            X = np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1)
+            test_features = X_scaler.transform(X)
             # test_features = X_scaler.transform(np.hstack((shape_feat, hist_feat)).reshape(1, -1))
             test_prediction = svc.predict(test_features)
 
@@ -89,11 +83,13 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
     return draw_img
 
 
-ystart = 0
+ystart = 400
 ystop = 656
 scale = 1.5
 
-out_img = find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size,
-                    hist_bins)
-
-plt.imshow(out_img)
+for fname in glob.glob('test_images/*.jpg'):
+    img = mpimg.imread(fname)
+    out_img = find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size,
+                        hist_bins)
+    plt.imshow(out_img)
+    plt.show()
