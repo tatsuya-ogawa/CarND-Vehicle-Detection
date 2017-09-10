@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import pickle
 import glob
 
+from scipy.ndimage import label
+
 from functions import *
 
 dist_pickle = pickle.load(open("svc_pickle.p", "rb"))
@@ -47,6 +49,7 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
     hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, feature_vec=False)
     hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, feature_vec=False)
 
+    box_list = []
     for xb in range(nxsteps):
         for yb in range(nysteps):
             ypos = yb * cells_per_step
@@ -77,9 +80,19 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
                 xbox_left = np.int(xleft * scale)
                 ytop_draw = np.int(ytop * scale)
                 win_draw = np.int(window * scale)
-                cv2.rectangle(draw_img, (xbox_left, ytop_draw + ystart),
-                              (xbox_left + win_draw, ytop_draw + win_draw + ystart), (0, 0, 255), 6)
+                # cv2.rectangle(draw_img, (xbox_left, ytop_draw + ystart),
+                #               (xbox_left + win_draw, ytop_draw + win_draw + ystart), (0, 0, 255), 6)
+                box_list.append(((xbox_left, ytop_draw + ystart),
+                                 (xbox_left + win_draw, ytop_draw + win_draw + ystart)))
 
+    heat = np.zeros_like(img[:, :, 0]).astype(np.float)
+    heat = add_heat(heat, box_list)
+    heat = apply_threshold(heat, 1)
+    heatmap = np.clip(heat, 0, 255)
+
+    labels = label(heatmap)
+    # draw_img = draw_labeled_bboxes(np.copy(img), labels)
+    draw_img = draw_labeled_bboxes(draw_img, labels)
     return draw_img
 
 
@@ -87,9 +100,20 @@ ystart = 400
 ystop = 656
 scale = 1.5
 
-for fname in glob.glob('test_images/*.jpg'):
-    img = mpimg.imread(fname)
-    out_img = find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size,
-                        hist_bins)
-    plt.imshow(out_img)
-    plt.show()
+cap = cv2.VideoCapture('project_video.mp4')
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+out = cv2.VideoWriter('output.avi', fourcc, 20, (1280, 720))
+while cap.isOpened():
+    ret, frame = cap.read()
+    if frame is not None:
+        out_frame = find_cars(frame, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block,
+                              spatial_size,
+                              hist_bins)
+        out.write(out_frame)
+
+# for fname in glob.glob('test_images/*.jpg'):
+#     img = mpimg.imread(fname)
+#     out_img = find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size,
+#                         hist_bins)
+#     plt.imshow(out_img)
+#     plt.show()

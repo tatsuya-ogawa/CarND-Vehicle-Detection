@@ -22,18 +22,26 @@ def train():
     notcar_features = []
 
     t1 = time.time()
-    for fname in glob.glob('train_images/vehicles/**/*.png'):
+    cars = [fname for fname in glob.glob('train_images/vehicles/**/*.png')]
+    notcars = [fname for fname in glob.glob('train_images/non-vehicles/**/*.png')]
+    sample_size = min(len(cars), len(notcars))
+    cars = cars[0:sample_size]
+    notcars = notcars[0:sample_size]
+
+    for fname in cars:
         image = mpimg.imread(fname)
         feature = single_img_features(image, orient=orient, cell_per_block=cell_per_block, pix_per_cell=pix_per_cell,
                                       spatial_size=spatial_size, hist_bins=hist_bins, hog_channel=hog_channel)
         car_features.append(feature)
-    for fname in glob.glob('train_images/non-vehicles/**/*.png'):
+
+    for fname in notcars:
         image = mpimg.imread(fname)
         feature = single_img_features(image, orient=orient, cell_per_block=cell_per_block, pix_per_cell=pix_per_cell,
                                       spatial_size=spatial_size, hist_bins=hist_bins, hog_channel=hog_channel)
         notcar_features.append(feature)
+
     t2 = time.time()
-    print(round(t2 - t1, 2), 'Seconds to extract HOG features...')
+    print(round(t2 - t1, 2), 'Seconds to extract features...')
 
     X = np.vstack((car_features, notcar_features)).astype(np.float64)
     X_scaler = StandardScaler().fit(X)
@@ -54,7 +62,8 @@ def train():
 
     print("Saving pickle")
     src_pickle = {"svc": svc, "scaler": X_scaler, "orient": orient, "pix_per_cell": pix_per_cell,
-                  "cell_per_block": cell_per_block, "spatial_size": spatial_size, "hist_bins": hist_bins,"hog_channel":hog_channel}
+                  "cell_per_block": cell_per_block, "spatial_size": spatial_size, "hist_bins": hist_bins,
+                  "hog_channel": hog_channel}
     pickle.dump(src_pickle, open("svc_pickle.p", "wb"))
 
 
