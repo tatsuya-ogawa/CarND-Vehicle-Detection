@@ -17,7 +17,6 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
     # Call with two outputs if vis==True
     if vis == True:
         features, hog_image = hog(img, orientations=orient,
-                                  block_norm='L2-Hys',
                                   pixels_per_cell=(pix_per_cell, pix_per_cell),
                                   cells_per_block=(cell_per_block, cell_per_block),
                                   transform_sqrt=False,
@@ -26,7 +25,6 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
     # Otherwise call with one output
     else:
         features = hog(img, orientations=orient,
-                       block_norm='L2-Hys',
                        pixels_per_cell=(pix_per_cell, pix_per_cell),
                        cells_per_block=(cell_per_block, cell_per_block),
                        transform_sqrt=False,
@@ -129,6 +127,6 @@ def draw_labeled_bboxes(img, labels):
         # Define a bounding box based on min/max x and y
         bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
         # Draw the box on the image
-        cv2.rectangle(img, bbox[0], bbox[1], (255, 0, 0), 6)
+        cv2.rectangle(img, bbox[0], bbox[1], (0, 0, 255), 6)
     # Return the image
     return img

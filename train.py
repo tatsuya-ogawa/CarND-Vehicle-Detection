@@ -24,9 +24,9 @@ def train():
     t1 = time.time()
     cars = [fname for fname in glob.glob('train_images/vehicles/**/*.png')]
     notcars = [fname for fname in glob.glob('train_images/non-vehicles/**/*.png')]
-    sample_size = min(len(cars), len(notcars))
-    cars = cars[0:sample_size]
-    notcars = notcars[0:sample_size]
+    # sample_size = min(len(cars), len(notcars))
+    # cars = cars[0:sample_size]
+    # notcars = notcars[0:sample_size]
 
     for fname in cars:
         image = mpimg.imread(fname)
@@ -63,7 +63,7 @@ def train():
     print("Saving pickle")
     src_pickle = {"svc": svc, "scaler": X_scaler, "orient": orient, "pix_per_cell": pix_per_cell,
                   "cell_per_block": cell_per_block, "spatial_size": spatial_size, "hist_bins": hist_bins,
-                  "hog_channel": hog_channel}
+                  "hog_channel": hog_channel,"color_space":"YCrCb"}
     pickle.dump(src_pickle, open("svc_pickle.p", "wb"))
 
 

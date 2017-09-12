@@ -1,25 +1,16 @@
-import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
 import pickle
-import glob
 
+from moviepy.video.io.VideoFileClip import VideoFileClip
 from scipy.ndimage import label
-
 from functions import *
-
-dist_pickle = pickle.load(open("svc_pickle.p", "rb"))
-svc = dist_pickle["svc"]
-X_scaler = dist_pickle["scaler"]
-orient = dist_pickle["orient"]
-pix_per_cell = dist_pickle["pix_per_cell"]
-cell_per_block = dist_pickle["cell_per_block"]
-spatial_size = dist_pickle["spatial_size"]
-hist_bins = dist_pickle["hist_bins"]
 
 
 # Define a single function that can extract features using hog sub-sampling and make predictions
-def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
-    draw_img = np.copy(img)
+def find_cars(img,
+              ystart, ystop, scale,
+              svc, X_scaler, orient,
+              pix_per_cell, cell_per_block,
+              spatial_size, hist_bins):
     img = img.astype(np.float32) / 255
 
     img_tosearch = img[ystart:ystop, :, :]
@@ -80,40 +71,75 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
                 xbox_left = np.int(xleft * scale)
                 ytop_draw = np.int(ytop * scale)
                 win_draw = np.int(window * scale)
-                # cv2.rectangle(draw_img, (xbox_left, ytop_draw + ystart),
-                #               (xbox_left + win_draw, ytop_draw + win_draw + ystart), (0, 0, 255), 6)
                 box_list.append(((xbox_left, ytop_draw + ystart),
                                  (xbox_left + win_draw, ytop_draw + win_draw + ystart)))
-
-    heat = np.zeros_like(img[:, :, 0]).astype(np.float)
-    heat = add_heat(heat, box_list)
-    heat = apply_threshold(heat, 1)
-    heatmap = np.clip(heat, 0, 255)
-
-    labels = label(heatmap)
-    # draw_img = draw_labeled_bboxes(np.copy(img), labels)
-    draw_img = draw_labeled_bboxes(draw_img, labels)
-    return draw_img
+    return box_list
 
 
-ystart = 400
-ystop = 656
-scale = 1.5
+def main():
+    dist_pickle = pickle.load(open("svc_pickle.p", "rb"))
+    svc = dist_pickle["svc"]
+    X_scaler = dist_pickle["scaler"]
+    orient = dist_pickle["orient"]
+    pix_per_cell = dist_pickle["pix_per_cell"]
+    cell_per_block = dist_pickle["cell_per_block"]
+    spatial_size = dist_pickle["spatial_size"]
+    hist_bins = dist_pickle["hist_bins"]
+    heatmap_weight = np.array([0.1, 0.2, 0.3, 0.4], dtype=np.float)
 
-cap = cv2.VideoCapture('project_video.mp4')
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('output.avi', fourcc, 20, (1280, 720))
-while cap.isOpened():
-    ret, frame = cap.read()
-    if frame is not None:
-        out_frame = find_cars(frame, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block,
-                              spatial_size,
-                              hist_bins)
-        out.write(out_frame)
+    video_name = 'project_video.mp4'
+    # cap = cv2.VideoCapture(video_name)
+    # fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    # out = cv2.VideoWriter('output.avi', fourcc, 20, (1280, 720))
+    # ystart = 400
+    # ystop = 656
+    scales = [1.5, 2.0]
+    y_starts = [400, 400]
+    y_stops = [556, 656]
+    tmp_dic = {"heatmap_list": []}
 
-# for fname in glob.glob('test_images/*.jpg'):
-#     img = mpimg.imread(fname)
-#     out_img = find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size,
-#                         hist_bins)
-#     plt.imshow(out_img)
-#     plt.show()
+    def process_frame(frame):
+        heatmap_list = tmp_dic["heatmap_list"]
+        box_list = []
+        for scale, ystart, ystop in zip(scales, y_starts, y_stops):
+            box_list_tmp = find_cars(frame, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell,
+                                     cell_per_block,
+                                     spatial_size,
+                                     hist_bins)
+            box_list.extend(box_list_tmp)
+
+        heat = np.zeros_like(frame[:, :, 0]).astype(np.float)
+        heat = add_heat(heat, box_list)
+        heat = apply_threshold(heat, 1)
+        current_heatmap = np.clip(heat, 0, 255)
+
+        heatmap_list.append(current_heatmap)
+        heatmap_list = heatmap_list[-min(len(heatmap_weight), len(heatmap_list)):]
+        heatmap = np.sum(
+            np.array(heatmap_list, dtype=np.float) * heatmap_weight[-len(heatmap_list):].reshape((-1, 1, 1)),
+            axis=0)
+        heatmap = apply_threshold(heatmap, sum(heatmap_weight[-len(heatmap_list):]) * 2)
+
+        labels = label(heatmap)
+        draw_img = draw_labeled_bboxes(np.copy(frame), labels)
+        # for box in box_list:
+        #     cv2.rectangle(draw_img, box[0],
+        #                   box[1], (255, 0, 0), 6)
+        # cv2.rectangle(draw_img, (0, 400),
+        #               (1280, 656), (0, 255, 0), 6)
+        # cv2.rectangle(draw_img, (0, 400),
+        #               (1280, 464), (0, 255, 0), 6)
+
+        # out.write(draw_img)
+        tmp_dic["heatmap_list"] = heatmap_list
+        return draw_img
+
+    video_name = 'project_video.mp4'
+    clip = VideoFileClip(video_name)
+
+    clip = clip.fl_image(process_frame)
+    video_output = 'project_out.mp4'
+    clip.write_videofile(video_output, audio=False)
+
+
+main()
