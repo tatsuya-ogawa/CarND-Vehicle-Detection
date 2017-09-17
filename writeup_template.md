@@ -42,22 +42,60 @@ The code for this step is contained in the first code cell of the IPython notebo
 
 I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
 
-![alt text][image1]
+* vehicles
+![cars](./output_images/cars.png)
+* non vehicles
+![notcars](./output_images/notcars.png)
 
 I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
 
 Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
 
+* Vehicle hog features
+![vehicle hog](./output_images/car_hog.png)
 
-![alt text][image2]
+* Not vehicle hog features
+![not vehicle hog](./output_images/notcar_hog.png)
 
 ####2. Explain how you settled on your final choice of HOG parameters.
 
-I tried various combinations of parameters and...
+I tried various combinations of parameters and I got a folling results.
+This results were ordered by score(upper is high).
+So I choose top score result's parameter.
+
+| Use Spatial | Use Histogram | Use Hog | Colorspace | Orientations | Pixels Per Cell | Cells Per Block | HOG Channel | Extract Time | Training Time | Score |
+| :-----------------: | :-----------------: | :-----------------: | :-----------------: | :-----------------: | :-----------------: | :-----------------: | :-----------------: | :-----------------: | :-----------------: | :-----------------: |
+|True|True|True|YCrCb|9|8|2|ALL|57.81|4.22|0.9927|
+|True|True|True|YCrCb|11|8|2|ALL|62.66|21.15|0.9927|
+|True|True|True|YCrCb|6|8|2|ALL|55.72|12.09|0.9924|
+|True|True|True|YCrCb|9|8|2|ALL|59.48|7.41|0.9921|
+|True|True|True|YCrCb|7|8|2|ALL|59.42|5.04|0.9921|
+|True|True|True|YCrCb|9|8|3|ALL|58.15|5.9|0.9916|
+|True|True|True|YCrCb|9|4|2|ALL|151.1|9.4|0.9913|
+|True|True|True|YCrCb|12|8|2|ALL|63.95|4.77|0.991|
+|True|True|True|YCrCb|9|8|1|ALL|56.83|9.24|0.9907|
+|True|True|True|YCrCb|9|8|2|ALL|58.78|17.24|0.9904|
+|True|True|True|YCrCb|9|8|2|ALL|64.34|16.7|0.9901|
+|True|True|True|YCrCb|9|8|2|ALL|63.8|15.94|0.9899|
+|True|True|True|YCrCb|9|8|2|ALL|59.6|4.6|0.9899|
+|True|True|True|YCrCb|9|8|2|ALL|63.69|16.23|0.9899|
+|True|True|True|YCrCb|9|12|2|ALL|43.33|8.44|0.9893|
+|True|True|True|YCrCb|9|8|2|ALL|57.27|3.53|0.989|
+|True|True|True|YCrCb|9|8|2|ALL|59.79|3.7|0.989|
+|True|True|True|YCrCb|9|16|2|ALL|41.33|6.56|0.9887|
+|False|True|True|YCrCb|9|8|2|ALL|68.26|10.18|0.9879|
+|True|False|True|YCrCb|9|8|2|ALL|51.1|15.71|0.9868|
+|True|True|True|YCrCb|9|8|2|ALL|56.58|18.6|0.9837|
+|True|True|True|YCrCb|9|8|2|0|27.63|9.33|0.9837|
+|True|True|True|YCrCb|9|8|2|2|27.28|11.71|0.9707|
+|True|True|True|YCrCb|9|8|2|1|27.4|10.94|0.9685|
+|True|True|False|YCrCb|9|8|2|ALL|17.63|10.95|0.9502|
+
 
 ####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
 I trained a linear SVM using...
+
 
 ###Sliding Window Search
 
@@ -77,7 +115,7 @@ Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spat
 ### Video Implementation
 
 ####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](./project_out.mp4)
 
 
 ####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.

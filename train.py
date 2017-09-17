@@ -107,7 +107,10 @@ def train_iterate():
         "score": score,
         "extract_time": extract_time,
         "training_time": training_time,
-        "picle": result_pickle
+        "pickle": result_pickle,
+        "spatial_feat": False,
+        "hist_feat": True,
+        "hog_feat": True
     })
 
     result_pickle, score, extract_time, training_time = train(color_space=color_space, orient=orient,
@@ -119,7 +122,10 @@ def train_iterate():
         "score": score,
         "extract_time": extract_time,
         "training_time": training_time,
-        "picle": result_pickle
+        "pickle": result_pickle,
+        "spatial_feat": True,
+        "hist_feat": False,
+        "hog_feat": True
     })
 
     result_pickle, score, extract_time, training_time = train(color_space=color_space, orient=orient,
@@ -131,7 +137,10 @@ def train_iterate():
         "score": score,
         "extract_time": extract_time,
         "training_time": training_time,
-        "picle": result_pickle
+        "pickle": result_pickle,
+        "spatial_feat": True,
+        "hist_feat": True,
+        "hog_feat": False
     })
 
     for _color_space in color_space_list:
@@ -144,7 +153,10 @@ def train_iterate():
             "score": score,
             "extract_time": extract_time,
             "training_time": training_time,
-            "picle": result_pickle
+            "pickle": result_pickle,
+            "spatial_feat": True,
+            "hist_feat": True,
+            "hog_feat": True
         })
 
     for _pix_per_cell in pix_per_cell_list:
@@ -157,7 +169,10 @@ def train_iterate():
             "score": score,
             "extract_time": extract_time,
             "training_time": training_time,
-            "picle": result_pickle
+            "pickle": result_pickle,
+            "spatial_feat": True,
+            "hist_feat": True,
+            "hog_feat": True
         })
 
     for _cell_per_block in cell_per_block_list:
@@ -170,7 +185,10 @@ def train_iterate():
             "score": score,
             "extract_time": extract_time,
             "training_time": training_time,
-            "picle": result_pickle
+            "pickle": result_pickle,
+            "spatial_feat": True,
+            "hist_feat": True,
+            "hog_feat": True
         })
 
     for _hog_channel in hog_channel_list:
@@ -183,7 +201,10 @@ def train_iterate():
             "score": score,
             "extract_time": extract_time,
             "training_time": training_time,
-            "picle": result_pickle
+            "pickle": result_pickle,
+            "spatial_feat": True,
+            "hist_feat": True,
+            "hog_feat": True
         })
 
     for _orient in orient_list:
@@ -196,7 +217,10 @@ def train_iterate():
             "score": score,
             "extract_time": extract_time,
             "training_time": training_time,
-            "picle": result_pickle
+            "pickle": result_pickle,
+            "spatial_feat": True,
+            "hist_feat": True,
+            "hog_feat": True
         })
     print("Saving pickle")
     pickle.dump(result_list, open("svc_pickle_list.p", "wb"))
