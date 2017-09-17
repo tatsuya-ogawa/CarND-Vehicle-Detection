@@ -88,18 +88,6 @@ def display_hog():
 
 def list_results():
     svc_results = pickle.load(open("svc_pickle_list.p", "rb"))
-    # for result in svc_results:
-    #     result['spatial_feat'] = True
-    #     result['hist_feat'] = True
-    #     result['hog_feat'] = True
-    # svc_results[0]['spatial_feat'] = False
-    # svc_results[1]['hist_feat'] = False
-    # svc_results[2]['hog_feat'] = False
-    # pickle.dump(svc_results,open('svc_pickle_list.p', 'wb'))
-    # for result in svc_results:
-    #     result['pickle'] = result['picle']
-    #     del(result['picle'])
-    # pickle.dump(svc_results,open('svc_pickle_list.p', 'wb'))
     svc_results.sort(key=lambda x: -x["score"])
     with open('list.txt', 'w') as f:
         columns = " Use Spatial | Use Histogram | Use Hog | Colorspace | Orientations | Pixels Per Cell | Cells Per Block | HOG Channel | Extract Time | Training Time | Score ".split(

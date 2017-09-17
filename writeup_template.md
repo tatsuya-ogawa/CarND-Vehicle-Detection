@@ -62,6 +62,7 @@ Here is an example using the `YCrCb` color space and HOG parameters of `orientat
 I tried various combinations of parameters and I got a folling results.
 This results were ordered by score(upper is high).
 So I choose top score result's parameter.
+(The histogram bins was 32 and spatial image size was 32)
 
 | Use Spatial | Use Histogram | Use Hog | Colorspace | Orientations | Pixels Per Cell | Cells Per Block | HOG Channel | Extract Time | Training Time | Score |
 | :-----------------: | :-----------------: | :-----------------: | :-----------------: | :-----------------: | :-----------------: | :-----------------: | :-----------------: | :-----------------: | :-----------------: | :-----------------: |
@@ -94,8 +95,7 @@ So I choose top score result's parameter.
 
 ####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I trained a linear SVM using...
-
+I trained a linear SVM using HOG and spatial intensity and channel intensity histogram features and was able to achive a test accuracy of 99.27% (train.py line 70 through 82).
 
 ###Sliding Window Search
 
