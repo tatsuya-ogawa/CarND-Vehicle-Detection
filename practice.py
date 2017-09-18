@@ -204,5 +204,3 @@ def detect_output():
         axs[i - 1].set_title('test{}.jpg'.format(i))
     plt.savefig('./output_images/detect_output.jpg')
 
-
-frames()
