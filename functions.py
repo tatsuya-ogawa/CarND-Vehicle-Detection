@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 from skimage.feature import hog
+from scipy.ndimage import label
 
 
 def convert_color(img, conv='RGB2YCrCb'):
@@ -132,6 +133,47 @@ def draw_labeled_bboxes(img, labels):
     return img
 
 
+def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
+                 xy_window=(64, 64), xy_overlap=(0.5, 0.5)):
+    # If x and/or y start/stop positions not defined, set to image size
+    if x_start_stop[0] == None:
+        x_start_stop[0] = 0
+    if x_start_stop[1] == None:
+        x_start_stop[1] = img.shape[1]
+    if y_start_stop[0] == None:
+        y_start_stop[0] = 0
+    if y_start_stop[1] == None:
+        y_start_stop[1] = img.shape[0]
+    # Compute the span of the region to be searched
+    xspan = x_start_stop[1] - x_start_stop[0]
+    yspan = y_start_stop[1] - y_start_stop[0]
+    # Compute the number of pixels per step in x/y
+    nx_pix_per_step = np.int(xy_window[0] * (1 - xy_overlap[0]))
+    ny_pix_per_step = np.int(xy_window[1] * (1 - xy_overlap[1]))
+    # Compute the number of windows in x/y
+    nx_buffer = np.int(xy_window[0] * (xy_overlap[0]))
+    ny_buffer = np.int(xy_window[1] * (xy_overlap[1]))
+    nx_windows = np.int((xspan - nx_buffer) / nx_pix_per_step)
+    ny_windows = np.int((yspan - ny_buffer) / ny_pix_per_step)
+    # Initialize a list to append window positions to
+    window_list = []
+    # Loop through finding x and y window positions
+    # Note: you could vectorize this step, but in practice
+    # you'll be considering windows one by one with your
+    # classifier, so looping makes sense
+    for ys in range(ny_windows):
+        for xs in range(nx_windows):
+            # Calculate window position
+            startx = xs * nx_pix_per_step + x_start_stop[0]
+            endx = startx + xy_window[0]
+            starty = ys * ny_pix_per_step + y_start_stop[0]
+            endy = starty + xy_window[1]
+            # Append window position to list
+            window_list.append(((int(startx), int(starty)), (int(endx), int(endy))))
+    # Return the list of windows
+    return window_list
+
+
 # Define a single function that can extract features using hog sub-sampling and make predictions
 def find_cars(img,
               ystart, ystop, scale,
@@ -201,3 +243,43 @@ def find_cars(img,
                 box_list.append(((xbox_left, ytop_draw + ystart),
                                  (xbox_left + win_draw, ytop_draw + win_draw + ystart)))
     return box_list
+
+
+def process_image(src_image, dist_pickle, heatmap_list=[]):
+    scales = [0.8, 1.5, 2.0]
+    y_starts = [400, 400, 400]
+    y_stops = [480, 556, 656]
+
+    svc = dist_pickle["svc"]
+    X_scaler = dist_pickle["scaler"]
+    orient = dist_pickle["orient"]
+    pix_per_cell = dist_pickle["pix_per_cell"]
+    cell_per_block = dist_pickle["cell_per_block"]
+    spatial_size = dist_pickle["spatial_size"]
+    hist_bins = dist_pickle["hist_bins"]
+    heatmap_weight = np.array([0.1, 0.2, 0.3, 0.4], dtype=np.float)
+
+    box_list = []
+    for scale, ystart, ystop in zip(scales, y_starts, y_stops):
+        box_list_tmp = find_cars(src_image, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell,
+                                 cell_per_block,
+                                 spatial_size,
+                                 hist_bins)
+        box_list.extend(box_list_tmp)
+
+    org_heat = np.zeros_like(src_image[:, :, 0]).astype(np.float)
+    org_heat = add_heat(org_heat, box_list)
+    current_heatmap = apply_threshold(org_heat, 1)
+    current_heatmap = np.clip(current_heatmap, 0, 255)
+
+    heatmap_list.append(current_heatmap)
+    heatmap_list = heatmap_list[-min(len(heatmap_weight), len(heatmap_list)):]
+    heatmap = np.sum(
+        np.array(heatmap_list, dtype=np.float) * heatmap_weight[-len(heatmap_list):].reshape((-1, 1, 1)),
+        axis=0)
+    heatmap = apply_threshold(heatmap, sum(heatmap_weight[-len(heatmap_list):]) * len(scales))
+
+    labels = label(heatmap)
+    draw_img = draw_labeled_bboxes(np.copy(src_image), labels)
+
+    return draw_img, heatmap_list, box_list, org_heat, labels
